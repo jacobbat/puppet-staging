@@ -11,17 +11,18 @@
 #
 define staging::file (
   $source,              #: the source file location, supports local files, puppet://, http://, https://, ftp://, s3://
-  $target      = undef, #: the target file location, if unspecified ${staging::path}/${subdir}/${name}
-  $username    = undef, #: https or ftp username
-  $certificate = undef, #: https certificate file
-  $password    = undef, #: https or ftp user password or https certificate password
-  $environment = undef, #: environment variable for settings such as http_proxy, https_proxy, of ftp_proxy
-  $timeout     = undef, #: the the time to wait for the file transfer to complete
-  $curl_option = undef, #: options to pass to curl
-  $wget_option = undef, #: options to pass to wget
-  $tries       = undef, #: amount of retries for the file transfer when non transient connection errors exist
-  $try_sleep   = undef, #: time to wait between retries for the file transfer
-  $subdir      = $caller_module_name
+  $target       = undef, #: the target file location, if unspecified ${staging::path}/${subdir}/${name}
+  $username     = undef, #: https or ftp username
+  $certificate  = undef, #: https certificate file
+  $password     = undef, #: https or ftp user password or https certificate password
+  $environment  = undef, #: environment variable for settings such as http_proxy, https_proxy, of ftp_proxy
+  $timeout      = undef, #: the the time to wait for the file transfer to complete
+  $curl_option  = undef, #: options to pass to curl
+  $wget_option  = undef, #: options to pass to wget
+  $tries        = undef, #: amount of retries for the file transfer when non transient connection errors exist
+  $try_sleep    = undef, #: time to wait between retries for the file transfer
+  $ps_ignoressl = false, #: ignore SSL trust in PowerShell System.Net.Webclient
+  $subdir       = $caller_module_name
 ) {
 
   include staging
@@ -71,9 +72,11 @@ define staging::file (
       $ftp_get_passwd  = $http_get_passwd
     }
     'powershell':{
-      $http_get           = "powershell.exe -Command \"\$wc = New-Object System.Net.WebClient;\$wc.DownloadFile('${source}','${target_file}')\""
+      if $ps_ignoressl { $ignore_ssl = '[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};' }
+      else { $ignore_ssl = undef }  
+      $http_get           = "powershell.exe -Command \"$ignore_ssl(New-Object System.Net.WebClient).DownloadFile('${source}','${target_file}');[Net.ServicePointManager]::ServerCertificateValidationCallback = {\$false}\""
       $ftp_get            = $http_get
-      $http_get_passwd  = "powershell.exe -Command \"\$wc = New-Object System.Net.WebClient;\$wc.Credentials = New-Object System.Net.NetworkCredential('${username}','${password}');\$wc.DownloadFile('${source}','${target_file}')\""
+      $http_get_passwd  = "powershell.exe -Command \"$ignore_ssl\$wc = New-Object System.Net.WebClient;\$wc.Credentials = New-Object System.Net.NetworkCredential('${username}','${password}');\$wc.DownloadFile('${source}','${target_file}');[Net.ServicePointManager]::ServerCertificateValidationCallback = {\$false}\""
       $ftp_get_passwd   = $http_get_passwd
     }
   }
