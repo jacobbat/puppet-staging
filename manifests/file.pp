@@ -74,9 +74,9 @@ define staging::file (
     'powershell':{
       if $ps_ignoressl { $ignore_ssl = '[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};' }
       else { $ignore_ssl = undef }  
-      $http_get           = "powershell.exe -Command \"$ignore_ssl(New-Object System.Net.WebClient).DownloadFile('${source}','${target_file}');[Net.ServicePointManager]::ServerCertificateValidationCallback = {\$false}\""
+      $http_get           = "powershell.exe -Command \"{$ignore_ssl}(New-Object System.Net.WebClient).DownloadFile('${source}','${target_file}');[Net.ServicePointManager]::ServerCertificateValidationCallback = {\$false}\""
       $ftp_get            = $http_get
-      $http_get_passwd  = "powershell.exe -Command \"$ignore_ssl\$wc = New-Object System.Net.WebClient;\$wc.Credentials = New-Object System.Net.NetworkCredential('${username}','${password}');\$wc.DownloadFile('${source}','${target_file}');[Net.ServicePointManager]::ServerCertificateValidationCallback = {\$false}\""
+      $http_get_passwd  = "powershell.exe -Command \"{$ignore_ssl}\$wc = New-Object System.Net.WebClient;\$wc.Credentials = New-Object System.Net.NetworkCredential('${username}','${password}');\$wc.DownloadFile('${source}','${target_file}');[Net.ServicePointManager]::ServerCertificateValidationCallback = {\$false}\""
       $ftp_get_passwd   = $http_get_passwd
     }
   }
